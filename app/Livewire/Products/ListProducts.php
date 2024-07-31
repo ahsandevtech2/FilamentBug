@@ -42,8 +42,8 @@ class ListProducts extends Component implements HasForms, HasTable
             ->filters([
                 QueryBuilder::make()
                     ->constraints([
-                        QueryBuilder\Constraints\TextConstraint::make('name')->label(trans('custom/products.name')),
-                        QueryBuilder\Constraints\TextConstraint::make('contact_number')->label(trans('custom/actions.contact_number')),
+                        QueryBuilder\Constraints\TextConstraint::make('name')->label('name'),
+                        QueryBuilder\Constraints\TextConstraint::make('contact_number')->label('contact number'),
                     ])
             ], Tables\Enums\FiltersLayout::AboveContentCollapsible)
             ->actions([
@@ -64,6 +64,33 @@ class ListProducts extends Component implements HasForms, HasTable
             ->paginated([10, 25, 50, 100]);
     }
 
+    public function removeTableFilters(): void
+    {
+        $filters = $this->getTable()->getFilters();
+
+        if (isset($filters['queryBuilder'])) {
+            unset($filters['queryBuilder']);
+        }
+
+        foreach ($filters as $filterName => $filter) {
+            $this->removeTableFilter(
+                $filterName,
+                isRemovingAllFilters: true,
+            );
+        }
+
+        $this->resetTableSearch();
+        $this->resetTableColumnSearches();
+
+        if ($this->getTable()->hasDeferredFilters()) {
+            $this->applyTableFilters();
+
+            return;
+        }
+
+        $this->handleTableFilterUpdates();
+    }
+
     protected function getListeners()
     {
         return array_merge(
@@ -72,11 +99,6 @@ class ListProducts extends Component implements HasForms, HasTable
                 'CostCentersUpdated' => '$refresh',
             ]
         );
-    }
-
-    public function test()
-    {
-        dd('herere');
     }
 
     public function render(): View
